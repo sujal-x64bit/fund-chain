@@ -1,0 +1,1792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FundChain — Decentralized Crowdfunding on Sepolia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1119;
+    --surface: #151b25;
+    --surface-muted: #1c2431;
+    --surface-blue: #14233d;
+    --text: #edf2fa;
+    --text-secondary: #aab5c7;
+    --text-tertiary: #8490a3;
+    --border: #2a3545;
+    --border-strong: #3b485b;
+    --accent: #5a91ff;
+    --accent-hover: #78a5ff;
+    --accent-soft: #1d3154;
+    --success: #42c899;
+    --success-soft: #14392f;
+    --danger: #ff747b;
+    --danger-soft: #482329;
+    --focus: #88adff;
+    --shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+    color-scheme: dark;
+  }
+
+  body.theme-light {
+    --bg: #f6f8fb;
+    --surface: #ffffff;
+    --surface-muted: #f2f5f9;
+    --surface-blue: #eef5ff;
+    --text: #172033;
+    --text-secondary: #59657a;
+    --text-tertiary: #7a8699;
+    --border: #dfe4ec;
+    --border-strong: #cbd3df;
+    --accent: #145ee8;
+    --accent-hover: #0d4ec4;
+    --accent-soft: #e7f0ff;
+    --success: #087a55;
+    --success-soft: #e7f7f1;
+    --danger: #c2323a;
+    --danger-soft: #ffeded;
+    --focus: #80aaff;
+    --shadow: 0 8px 30px rgba(34, 48, 75, 0.08);
+    color-scheme: light;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100vh; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-synthesis: none;
+    line-height: 1.5;
+    transition: background-color 200ms ease, color 200ms ease;
+  }
+
+  button, input, textarea, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  button:disabled { cursor: not-allowed; opacity: 0.6; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+
+  /* SVG Icons */
+  .icon { display: block; flex: none; stroke: currentColor; fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+
+  /* Brand */
+  .brand { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 760; letter-spacing: -0.02em; user-select: none; }
+  .brand-mark {
+    width: 38px; height: 38px; display: grid; place-items: center; color: #fff;
+    background: var(--accent); border-radius: 11px;
+    box-shadow: 0 5px 16px color-mix(in srgb, var(--accent) 28%, transparent);
+    transition: transform 150ms ease;
+  }
+  .brand-mark:hover { transform: scale(1.04); }
+
+  /* Icon Buttons */
+  .icon-button {
+    width: 44px; height: 44px; display: grid; place-items: center;
+    border: 1px solid var(--border); border-radius: 11px;
+    color: var(--text-secondary); background: var(--surface);
+    transition: 150ms ease;
+  }
+  .icon-button:hover { color: var(--text); border-color: var(--border-strong); background: var(--surface-muted); }
+
+  /* Buttons */
+  .primary-button, .secondary-button, .danger-button, .text-button, .refresh-button {
+    min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+    padding: 0 18px; border-radius: 10px; font-weight: 700; border: 1px solid transparent;
+    transition: 150ms ease; text-decoration: none;
+  }
+  .primary-button {
+    color: white; background: var(--accent);
+    box-shadow: 0 5px 14px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+  .primary-button:hover:not(:disabled) { background: var(--accent-hover); transform: translateY(-1px); }
+  .primary-button.large { min-height: 52px; padding: 0 24px; font-size: 16px; }
+  .secondary-button, .refresh-button { color: var(--text); border-color: var(--border); background: var(--surface); }
+  .secondary-button:hover:not(:disabled), .refresh-button:hover:not(:disabled) {
+    border-color: var(--border-strong); background: var(--surface-muted);
+  }
+  .danger-button { color: white; background: var(--danger); box-shadow: 0 5px 14px color-mix(in srgb, var(--danger) 22%, transparent); }
+  .danger-button:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
+  .text-button { padding: 0 8px; color: var(--text-secondary); background: transparent; }
+  .text-button:hover { color: var(--accent); }
+  .full { width: 100%; }
+
+  /* Landing Page */
+  .landing {
+    min-height: 100vh; position: relative; overflow: hidden;
+    background: radial-gradient(circle at 80% 45%, var(--accent-soft), transparent 35%), var(--bg);
+  }
+  .landing-header {
+    height: 84px; max-width: 1200px; margin: auto; padding: 0 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: relative; z-index: 2;
+  }
+  .hero {
+    width: min(650px, calc(100% - 64px)); min-height: calc(100vh - 84px);
+    margin-left: max(32px, calc((100% - 1200px) / 2)); padding: 12vh 0 80px;
+    position: relative; z-index: 2;
+  }
+  .eyebrow, .section-label {
+    color: var(--accent); font-size: 12px; font-weight: 760; letter-spacing: .08em; text-transform: uppercase;
+  }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px;
+    border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+    background: var(--surface-blue); border-radius: 999px;
+  }
+  .status-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--success);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--success) 15%, transparent);
+  }
+  .hero h1 {
+    max-width: 620px; margin: 24px 0 22px; font-size: clamp(44px, 5.2vw, 68px);
+    line-height: 1.03; letter-spacing: -0.055em; font-weight: 800;
+  }
+  .hero-copy {
+    max-width: 590px; color: var(--text-secondary); font-size: 19px; line-height: 1.65;
+  }
+  .hero-actions { display: flex; align-items: center; gap: 20px; margin-top: 36px; flex-wrap: wrap; }
+  .trust-row {
+    display: flex; gap: 26px; margin-top: 48px; color: var(--text-tertiary); font-size: 13px; font-weight: 650; flex-wrap: wrap;
+  }
+  .trust-row span { display: flex; align-items: center; gap: 8px; }
+  .trust-row span::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--border-strong); }
+
+  /* Hero Visual Orbit */
+  .hero-visual { width: 45vw; height: 70vh; position: absolute; top: 18vh; right: -5vw; pointer-events: none; }
+  .chain {
+    position: absolute; border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+    border-radius: 50%; transform: rotate(-20deg);
+  }
+  .chain-one { width: 540px; height: 300px; top: 10%; left: 8%; }
+  .chain-two { width: 420px; height: 230px; top: 32%; left: 22%; }
+  .fund-card {
+    width: 320px; padding: 24px; position: absolute; top: 28%; left: 18%; pointer-events: auto;
+    background: color-mix(in srgb, var(--surface) 90%, transparent); backdrop-filter: blur(16px);
+    border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow);
+    transform: rotate(-3deg); transition: transform 200ms ease;
+  }
+  .fund-card:hover { transform: rotate(0deg) scale(1.02); }
+  .fund-card span, .fund-card small { color: var(--text-secondary); font-size: 13px; }
+  .fund-card strong { display: block; margin: 14px 0; font-size: 32px; letter-spacing: -.03em; font-weight: 800; color: var(--text); }
+  .mini-progress { height: 8px; margin-bottom: 14px; overflow: hidden; background: var(--surface-muted); border-radius: 99px; }
+  .mini-progress span { display: block; width: 100%; height: 100%; background: var(--success); }
+
+  /* Inline Alert */
+  .inline-alert {
+    max-width: 520px; margin-top: 24px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px;
+    border-radius: 10px; font-size: 14px; line-height: 1.45;
+  }
+  .inline-alert strong, .inline-alert span { display: block; }
+  .inline-alert span { margin-top: 3px; font-size: 13px; color: var(--text-secondary); }
+  .error-alert { color: var(--danger); border: 1px solid color-mix(in srgb, var(--danger) 28%, transparent); background: var(--danger-soft); }
+
+  /* App Shell & Header */
+  .app-shell { min-height: 100vh; background: var(--bg); }
+  .app-header {
+    height: 76px; padding: 0 max(24px, calc((100% - 1200px) / 2));
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    backdrop-filter: blur(16px); position: sticky; top: 0; z-index: 20;
+  }
+  .header-actions { display: flex; align-items: center; gap: 10px; position: relative; }
+  .wallet-pill {
+    height: 46px; padding: 4px 12px 4px 5px; display: flex; align-items: center; gap: 9px;
+    color: var(--text); border: 1px solid var(--border); border-radius: 12px; background: var(--surface);
+    transition: 150ms ease; cursor: pointer;
+  }
+  .wallet-pill:hover { border-color: var(--border-strong); background: var(--surface-muted); }
+  .wallet-identicon {
+    width: 34px; height: 34px; display: grid; place-items: center; color: white;
+    font-size: 11px; font-weight: 800; background: linear-gradient(145deg, #155ee8, #6b4dff);
+    border-radius: 9px; flex: none;
+  }
+  .wallet-address { font-size: 14px; font-weight: 700; font-family: ui-monospace, SFMono-Regular, monospace; }
+  .network {
+    padding-left: 9px; display: flex; align-items: center; gap: 6px;
+    color: var(--text-secondary); font-size: 12px; border-left: 1px solid var(--border);
+  }
+  .network i { width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+  .wallet-balance {
+    font-size: 12px; font-weight: 650; color: var(--text-tertiary); margin-left: 2px;
+  }
+
+  /* Wallet Menu Dropdown */
+  .wallet-menu {
+    position: absolute; right: 0; top: calc(100% + 8px); width: 280px; padding: 12px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    box-shadow: var(--shadow); z-index: 25; display: none;
+  }
+  .wallet-menu.open { display: block; animation: dropIn 150ms ease; }
+  @keyframes dropIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+  .wallet-menu-header { padding: 8px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+  .wallet-menu-header small { color: var(--text-tertiary); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+  .wallet-menu-header div { font-size: 14px; font-weight: 700; margin-top: 4px; word-break: break-all; font-family: monospace; }
+  .wallet-menu-item {
+    width: 100%; padding: 10px 12px; display: flex; align-items: center; gap: 10px;
+    font-size: 13px; font-weight: 600; color: var(--text-secondary); background: transparent;
+    border: 0; border-radius: 8px; text-align: left;
+  }
+  .wallet-menu-item:hover { color: var(--text); background: var(--surface-muted); }
+  .wallet-menu-item.danger { color: var(--danger); }
+  .wallet-menu-item.danger:hover { background: var(--danger-soft); }
+
+  /* Dashboard */
+  .dashboard { max-width: 1200px; margin: auto; padding: 52px 24px 80px; }
+  .page-heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; }
+  .page-heading h1 { margin: 7px 0 4px; font-size: 38px; line-height: 1.15; letter-spacing: -.035em; font-weight: 800; }
+  .page-heading p, .panel-heading p { margin: 0; color: var(--text-secondary); line-height: 1.5; }
+
+  /* Disclaimer */
+  .disclaimer {
+    margin: 32px 0 28px; padding: 13px 16px; display: flex; align-items: center; gap: 10px;
+    color: var(--text-secondary); font-size: 13px; background: var(--surface-blue);
+    border: 1px solid color-mix(in srgb, var(--accent) 15%, var(--border)); border-radius: 10px;
+  }
+  .disclaimer .icon { color: var(--accent); }
+  .disclaimer strong { color: var(--text); }
+
+  /* Create Form Panel */
+  .form-panel {
+    margin-top: 28px; padding: 28px; border: 1px solid var(--border); border-radius: 14px;
+    background: var(--surface); box-shadow: var(--shadow);
+    animation: slideDown 200ms ease;
+  }
+  @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+  .panel-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 26px; }
+  .panel-heading h2 { margin: 6px 0; font-size: 25px; letter-spacing: -.025em; font-weight: 750; }
+  .campaign-form { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .wide { grid-column: 1 / -1; }
+  .field { display: flex; flex-direction: column; gap: 8px; color: var(--text-secondary); font-size: 13px; font-weight: 700; }
+  .field input, .field textarea, .field select, .search-field {
+    width: 100%; color: var(--text); border: 1px solid var(--border); border-radius: 9px;
+    background: var(--surface); transition: border-color 150ms ease;
+  }
+  .field input, .field select { min-height: 44px; padding: 0 13px; }
+  .field textarea { min-height: 88px; padding: 12px 13px; resize: vertical; line-height: 1.5; }
+  .field input::placeholder, .field textarea::placeholder, .search-field input::placeholder {
+    color: var(--text-tertiary); font-weight: 450;
+  }
+  .field input:hover, .field textarea:hover, .field select:hover, .search-field:hover {
+    border-color: var(--border-strong);
+  }
+  .input-suffix {
+    display: flex; align-items: center; border: 1px solid var(--border); border-radius: 9px;
+    background: var(--surface); overflow: hidden;
+  }
+  .input-suffix:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .input-suffix input { border: 0; outline: 0; min-height: 44px; padding: 0 13px; flex: 1; background: transparent; }
+  .input-suffix b { padding: 0 13px; color: var(--text-tertiary); font-size: 11px; letter-spacing: .06em; flex: none; }
+  .preset-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .preset-btn {
+    padding: 3px 9px; border-radius: 6px; font-size: 11px; font-weight: 650;
+    border: 1px solid var(--border); background: var(--surface-muted); color: var(--text-secondary);
+  }
+  .preset-btn:hover { border-color: var(--border-strong); color: var(--text); }
+
+  .form-note {
+    padding: 12px 14px; display: flex; align-items: center; gap: 9px;
+    color: var(--text-secondary); font-size: 13px; background: var(--surface-muted); border-radius: 9px;
+  }
+  .form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+
+  /* Tools & Tabs */
+  .campaign-tools { display: flex; align-items: center; gap: 10px; }
+  .search-field {
+    max-width: 420px; height: 46px; padding: 0 12px; display: flex; align-items: center; gap: 10px;
+    background: var(--surface);
+  }
+  .search-field .icon { color: var(--text-tertiary); }
+  .search-field input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; }
+  .search-field button {
+    width: 32px; height: 32px; display: grid; place-items: center; padding: 0;
+    color: var(--text-tertiary); border: 0; background: transparent; cursor: pointer;
+  }
+  .refresh-button { margin-left: auto; }
+  .refresh-button.spinning .icon { animation: spin 800ms linear infinite; }
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+
+  .tabs { margin-top: 24px; display: flex; gap: 4px; overflow-x: auto; border-bottom: 1px solid var(--border); }
+  .tabs button {
+    min-height: 46px; padding: 0 14px; display: flex; align-items: center; gap: 7px;
+    white-space: nowrap; color: var(--text-secondary); font-size: 14px; font-weight: 700;
+    border: 0; border-bottom: 2px solid transparent; background: transparent;
+  }
+  .tabs button:hover { color: var(--text); }
+  .tabs button.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tabs button span {
+    min-width: 22px; padding: 2px 7px; color: var(--text-tertiary); font-size: 11px;
+    background: var(--surface-muted); border-radius: 99px;
+  }
+  .tabs button.active span { color: var(--accent); background: var(--accent-soft); }
+
+  .results-heading {
+    padding: 20px 1px 12px; display: flex; justify-content: space-between;
+    color: var(--text-tertiary); font-size: 12px; font-weight: 650;
+  }
+
+  /* Campaign Cards */
+  .campaign-list { display: flex; flex-direction: column; gap: 16px; }
+  .campaign-card {
+    overflow: hidden; border: 1px solid var(--border); border-radius: 12px;
+    background: var(--surface); transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+  .campaign-card:hover {
+    border-color: var(--border-strong);
+    box-shadow: 0 6px 22px color-mix(in srgb, var(--text) 5%, transparent);
+  }
+  .card-main { display: grid; grid-template-columns: minmax(0, 1fr) 310px; }
+  .card-content { min-width: 0; padding: 24px; }
+  .card-action {
+    padding: 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 18px;
+    background: var(--surface-muted); border-left: 1px solid var(--border);
+  }
+  .card-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+  .card-title-row h3 { margin: 10px 0 0; font-size: 21px; letter-spacing: -.02em; font-weight: 750; }
+
+  /* Badges */
+  .badge {
+    width: fit-content; padding: 5px 9px; display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 780; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .badge span { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .badge.active { color: var(--accent); background: var(--accent-soft); }
+  .badge.active span { animation: pulseDot 1.5s infinite; }
+  @keyframes pulseDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } }
+  .badge.success { color: var(--success); background: var(--success-soft); }
+  .badge.danger { color: var(--danger); background: var(--danger-soft); }
+
+  .expand-button {
+    width: 44px; height: 44px; margin: -7px -7px 0 0; display: grid; place-items: center;
+    flex: none; color: var(--text-tertiary); border: 0; border-radius: 9px; background: transparent;
+    transition: transform 180ms ease, color 150ms ease;
+  }
+  .expand-button:hover { color: var(--text); background: var(--surface-muted); }
+  .expanded .expand-button { transform: rotate(180deg); }
+
+  .card-description {
+    max-width: 680px; margin: 13px 0 20px; color: var(--text-secondary);
+    font-size: 14px; line-height: 1.55; overflow-wrap: anywhere;
+  }
+
+  /* Progress Bar */
+  .progress-copy {
+    margin-bottom: 8px; display: flex; justify-content: space-between;
+    color: var(--text-secondary); font-size: 13px; font-weight: 600;
+  }
+  .progress-copy strong { color: var(--text); }
+  .progress-track { height: 7px; overflow: hidden; background: var(--surface-muted); border-radius: 99px; }
+  .progress-track span {
+    display: block; height: 100%; background: var(--accent); border-radius: inherit;
+    transition: width 400ms ease;
+  }
+  .progress-track.met span { background: var(--success); }
+  .progress-track.missed span { background: var(--danger); }
+
+  /* Metadata Grid */
+  .card-meta { margin-top: 22px; display: grid; grid-template-columns: 1.25fr 1.25fr 1.2fr .5fr; gap: 18px; }
+  .card-meta > div { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+  .meta-label {
+    color: var(--text-tertiary); font-size: 10px; font-weight: 750;
+    letter-spacing: .07em; text-transform: uppercase;
+  }
+  .card-meta strong {
+    overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; font-weight: 700;
+  }
+  .time-left { display: flex; align-items: center; gap: 6px; }
+  .address { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .address a { color: inherit; text-decoration: none; }
+  .address a:hover { text-decoration: underline; color: var(--accent); }
+
+  /* Card Action Aside */
+  .action-kicker {
+    color: var(--text-tertiary); font-size: 10px; font-weight: 760;
+    letter-spacing: .07em; text-transform: uppercase;
+  }
+  .card-action h4 { margin: 5px 0 0; font-size: 16px; font-weight: 750; }
+  .card-action p { margin: 0; color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
+  .card-action small { color: var(--text-tertiary); text-align: center; font-size: 12px; }
+  .refund-amount {
+    padding: 11px 12px; display: flex; justify-content: space-between;
+    font-size: 13px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  }
+  .refund-amount span { color: var(--text-secondary); }
+  .refund-amount strong { color: var(--text); font-weight: 700; }
+  .locked-action {
+    min-height: 100%; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 14px; text-align: center;
+  }
+  .disabled-pill {
+    min-height: 40px; padding: 0 14px; display: inline-flex; align-items: center; justify-content: center;
+    gap: 7px; color: var(--text-secondary); font-size: 12px; font-weight: 700;
+    border: 1px solid var(--border); border-radius: 999px; background: var(--surface); width: 100%;
+  }
+  .quick-amounts { display: flex; gap: 6px; margin-top: 6px; }
+  .quick-amounts button {
+    flex: 1; padding: 4px; font-size: 11px; font-weight: 700; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary);
+  }
+  .quick-amounts button:hover { border-color: var(--border-strong); color: var(--text); }
+
+  /* Expanded Drawer */
+  .expanded-content {
+    padding: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 36px;
+    border-top: 1px solid var(--border);
+    background: color-mix(in srgb, var(--surface-muted) 50%, var(--surface));
+    animation: fadeIn 200ms ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .expanded-content h4 { margin: 0 0 14px; font-size: 14px; font-weight: 750; }
+  .detail-box {
+    border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 14px;
+    display: flex; flex-direction: column; gap: 10px; font-size: 13px;
+  }
+  .detail-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .detail-row span { color: var(--text-secondary); }
+  .detail-row strong { color: var(--text); font-family: monospace; }
+  .detail-row a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .detail-row a:hover { text-decoration: underline; }
+
+  /* Empty State */
+  .empty-state {
+    padding: 70px 24px; display: flex; flex-direction: column; align-items: center; text-align: center;
+    border: 1px dashed var(--border-strong); border-radius: 12px; background: var(--surface);
+  }
+  .empty-icon {
+    width: 52px; height: 52px; display: grid; place-items: center; color: var(--text-secondary);
+    background: var(--surface-muted); border-radius: 50%;
+  }
+  .empty-state h3 { margin: 16px 0 4px; font-size: 20px; font-weight: 750; }
+  .empty-state p { margin: 0 0 20px; color: var(--text-secondary); font-size: 14px; }
+
+  /* Skeletons */
+  .skeleton-card { padding: 26px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+  .skeleton-line, .skeleton-progress {
+    height: 12px; margin-top: 13px; border-radius: 99px;
+    background: linear-gradient(90deg, var(--surface-muted), var(--border), var(--surface-muted));
+    background-size: 200% 100%; animation: shimmer 1.5s infinite;
+  }
+  .skeleton-line.short { width: 90px; height: 22px; margin-top: 0; }
+  .skeleton-line.title { width: 45%; height: 20px; }
+  .skeleton-line.medium { width: 70%; }
+  .skeleton-progress { height: 7px; margin-top: 28px; }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+
+  /* Transaction In Progress Overlay */
+  .transaction-overlay {
+    position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 24px;
+    background: color-mix(in srgb, #09101d 72%, transparent); backdrop-filter: blur(8px);
+  }
+  .transaction-modal {
+    width: min(440px, 100%); padding: 38px 32px; text-align: center;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
+    box-shadow: 0 24px 80px rgba(0,0,0,.35); animation: zoomIn 200ms ease;
+  }
+  @keyframes zoomIn { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
+  .loader {
+    width: 64px; height: 64px; margin: 0 auto 22px; display: grid; place-items: center;
+    color: var(--accent); background: var(--accent-soft); border-radius: 50%;
+    animation: pulse 1.6s infinite;
+  }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 14px color-mix(in srgb, var(--accent) 12%, transparent); } }
+  .transaction-modal h2 { margin: 8px 0; font-size: 22px; font-weight: 750; }
+  .transaction-modal p { margin: 0; color: var(--text-secondary); font-size: 14px; line-height: 1.5; }
+  .waiting-line { margin-top: 28px; display: flex; justify-content: center; gap: 8px; }
+  .waiting-line span {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
+    animation: wait 1s infinite alternate;
+  }
+  .waiting-line span:nth-child(2) { animation-delay: .2s; }
+  .waiting-line span:nth-child(3) { animation-delay: .4s; }
+  @keyframes wait { to { opacity: .25; transform: translateY(-5px); } }
+
+  /* Toast Notification */
+  .toast {
+    width: min(420px, calc(100% - 32px)); padding: 14px 16px; display: grid; grid-template-columns: auto 1fr auto;
+    gap: 12px; position: fixed; right: 24px; bottom: 24px; z-index: 60;
+    border: 1px solid var(--border); border-left-width: 4px; border-radius: 12px;
+    background: var(--surface); box-shadow: var(--shadow); animation: slideUp 200ms ease;
+  }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .toast.success { border-left-color: var(--success); }
+  .toast.error { border-left-color: var(--danger); }
+  .toast-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; }
+  .toast.success .toast-icon { color: var(--success); background: var(--success-soft); }
+  .toast.error .toast-icon { color: var(--danger); background: var(--danger-soft); }
+  .toast strong { font-size: 14px; font-weight: 750; display: block; }
+  .toast p { margin: 3px 0 0; color: var(--text-secondary); font-size: 13px; line-height: 1.4; }
+  .toast button {
+    width: 32px; height: 32px; display: grid; place-items: center;
+    color: var(--text-tertiary); border: 0; background: transparent; cursor: pointer;
+  }
+  .toast button:hover { color: var(--text); }
+
+  /* Responsive Rules */
+  @media (max-width: 900px) {
+    .hero-visual { opacity: .25; right: -25vw; }
+    .card-main { grid-template-columns: 1fr; }
+    .card-action { border-top: 1px solid var(--border); border-left: 0; }
+    .card-meta { grid-template-columns: repeat(2, 1fr); }
+    .expanded-content { grid-template-columns: 1fr; gap: 20px; }
+  }
+
+  @media (max-width: 600px) {
+    .landing-header { height: 72px; padding: 0 16px; }
+    .hero { width: auto; min-height: calc(100vh - 72px); margin: 0; padding: 11vh 20px 50px; }
+    .hero h1 { margin-top: 20px; font-size: 40px; }
+    .hero-copy { font-size: 16px; }
+    .hero-actions { align-items: stretch; flex-direction: column; gap: 10px; }
+    .trust-row { align-items: flex-start; flex-direction: column; gap: 10px; margin-top: 34px; }
+    .hero-visual { display: none; }
+    .app-header { height: 68px; padding: 0 16px; }
+    .brand-mark { width: 36px; height: 36px; }
+    .brand > span:last-child { display: none; }
+    .header-actions { gap: 6px; }
+    .wallet-pill { padding-right: 7px; }
+    .wallet-address { display: none; }
+    .wallet-balance { display: none; }
+    .network { padding-left: 0; border-left: 0; }
+    .dashboard { padding: 32px 16px 60px; }
+    .page-heading { align-items: flex-start; flex-direction: column; }
+    .page-heading h1 { font-size: 32px; }
+    .page-heading .primary-button { width: 100%; }
+    .disclaimer { align-items: flex-start; margin: 24px 0; }
+    .form-panel { margin-left: -16px; margin-right: -16px; padding: 22px 16px; border-left: 0; border-right: 0; border-radius: 0; }
+    .campaign-form { grid-template-columns: 1fr; }
+    .wide { grid-column: auto; }
+    .form-actions { flex-direction: column-reverse; }
+    .form-actions button { width: 100%; }
+    .campaign-tools { align-items: stretch; }
+    .search-field { max-width: none; }
+    .refresh-button { display: none; }
+    .tabs { margin-left: -16px; margin-right: -16px; padding-left: 16px; }
+    .results-heading { padding-top: 16px; }
+    .card-content, .card-action { padding: 20px; }
+    .card-title-row h3 { font-size: 18px; line-height: 1.35; }
+    .card-meta { grid-template-columns: 1fr 1fr; gap: 18px 12px; }
+    .expanded-content { padding: 20px; }
+    .toast { right: 16px; bottom: 16px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      scroll-behavior: auto !important; animation-duration: .01ms !important;
+      animation-iteration-count: 1 !important; transition-duration: .01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- SVG Icon Symbols -->
+<svg hidden>
+  <symbol id="i-logo" viewBox="0 0 24 24">
+    <path d="M7 7.5 12 4l5 3.5v5L12 16l-5-3.5v-5Z"/>
+    <path d="m7 12.5-3 2v4L8 21l4-2.5V16m5-3.5 3 2v4L16 21l-4-2.5"/>
+  </symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24">
+    <path d="M4 6.5h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6.2A2.2 2.2 0 0 1 5.2 4H17"/>
+    <path d="M16 11h4v4h-4a2 2 0 0 1 0-4Z"/>
+  </symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="4"/>
+    <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+  </symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24">
+    <path d="M20 15.4A8 8 0 0 1 8.6 4a8 8 0 1 0 11.4 11.4Z"/>
+  </symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24">
+    <path d="M12 5v14M5 12h14"/>
+  </symbol>
+  <symbol id="i-search" viewBox="0 0 24 24">
+    <circle cx="11" cy="11" r="7"/>
+    <path d="m20 20-4-4"/>
+  </symbol>
+  <symbol id="i-info" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="9"/>
+    <path d="M12 11v5M12 8h.01"/>
+  </symbol>
+  <symbol id="i-close" viewBox="0 0 24 24">
+    <path d="m6 6 12 12M18 6 6 18"/>
+  </symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24">
+    <path d="m9 18 6-6-6-6"/>
+  </symbol>
+  <symbol id="i-check" viewBox="0 0 24 24">
+    <path d="m5 12 4 4L19 6"/>
+  </symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24">
+    <path d="m6 9 6 6 6-6"/>
+  </symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="9"/>
+    <path d="M12 7v5l3 2"/>
+  </symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24">
+    <rect x="8" y="8" width="11" height="11" rx="2"/>
+    <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>
+  </symbol>
+  <symbol id="i-external" viewBox="0 0 24 24">
+    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+    <polyline points="15 3 21 3 21 9"/>
+    <line x1="10" y1="14" x2="21" y2="3"/>
+  </symbol>
+</svg>
+
+<!-- 1. Landing View (When Not Connected) -->
+<section id="landing" class="landing">
+  <header class="landing-header">
+    <div class="brand">
+      <span class="brand-mark"><svg class="icon" width="22" height="22"><use href="#i-logo"></use></svg></span>
+      <span>FundChain</span>
+    </div>
+    <button class="icon-button" id="themeBtn" type="button" aria-label="Toggle theme">
+      <svg class="icon" width="20" height="20"><use href="#i-sun"></use></svg>
+    </button>
+  </header>
+
+  <div class="hero">
+    <div class="eyebrow">
+      <span class="status-dot"></span>
+      Built on Sepolia testnet
+    </div>
+    <h1>Fund ideas together.<br>Release funds only if the goal is met.</h1>
+    <p class="hero-copy">
+      Campaigns are all-or-nothing: contributions are only released to the creator when the goal is reached, or 100% refundable if it isn't.
+    </p>
+
+    <div class="hero-actions">
+      <button id="connectBtn" class="primary-button large" type="button">
+        <svg class="icon" width="20" height="20"><use href="#i-wallet"></use></svg>
+        Connect wallet
+      </button>
+      <button id="previewBtn" class="text-button" type="button">
+        Explore demo mode
+      </button>
+    </div>
+
+    <div id="noWalletAlert" class="inline-alert error-alert" hidden role="alert">
+      <svg class="icon" width="20" height="20"><use href="#i-info"></use></svg>
+      <div>
+        <strong>No wallet found</strong>
+        <span>Please install MetaMask or another Web3 browser wallet, then refresh this page to connect to Sepolia.</span>
+      </div>
+    </div>
+
+    <div class="trust-row">
+      <span>Transparent milestones</span>
+      <span>Test ETH only</span>
+      <span>On-chain refunds</span>
+    </div>
+  </div>
+
+  <div class="hero-visual" aria-hidden="true">
+    <div class="chain chain-one"></div>
+    <div class="chain chain-two"></div>
+    <div class="fund-card">
+      <span>Campaign funded</span>
+      <strong>10.00 ETH</strong>
+      <div class="mini-progress"><span></span></div>
+      <small>Secured on-chain · All-or-nothing</small>
+    </div>
+  </div>
+</section>
+
+<!-- 2. Main App Shell (When Connected or in Demo Mode) -->
+<div id="shell" class="app-shell" hidden>
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-mark"><svg class="icon" width="22" height="22"><use href="#i-logo"></use></svg></span>
+      <span>FundChain</span>
+    </div>
+
+    <div class="header-actions">
+      <button class="icon-button" id="themeBtn2" type="button" aria-label="Toggle theme">
+        <svg class="icon" width="20" height="20"><use href="#i-sun"></use></svg>
+      </button>
+
+      <button id="walletPill" class="wallet-pill" type="button" aria-label="Account details">
+        <span class="wallet-identicon">FC</span>
+        <span class="wallet-address" id="accountAddr">0x000...0000</span>
+        <span class="wallet-balance" id="accountBal"></span>
+        <span class="network"><i></i>Sepolia</span>
+        <svg class="icon" width="16" height="16"><use href="#i-chevron"></use></svg>
+      </button>
+
+      <!-- Wallet Dropdown Menu -->
+      <div id="walletMenu" class="wallet-menu">
+        <div class="wallet-menu-header">
+          <small>Connected Account</small>
+          <div id="fullAccountAddr"></div>
+        </div>
+        <button id="copyAddrBtn" class="wallet-menu-item" type="button">
+          <svg class="icon" width="16" height="16"><use href="#i-copy"></use></svg>
+          Copy address
+        </button>
+        <a id="etherscanLink" class="wallet-menu-item" target="_blank" rel="noopener noreferrer">
+          <svg class="icon" width="16" height="16"><use href="#i-external"></use></svg>
+          View on Sepolia Etherscan
+        </a>
+        <button id="disconnectBtn" class="wallet-menu-item danger" type="button">
+          <svg class="icon" width="16" height="16"><use href="#i-close"></use></svg>
+          Disconnect
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="dashboard">
+    <div class="page-heading">
+      <div>
+        <span class="section-label">Crowdfunding, on-chain</span>
+        <h1>Campaigns</h1>
+        <p>Support practical ideas with transparent, milestone-based funding on Ethereum Sepolia.</p>
+      </div>
+      <button class="primary-button" id="toggleFormBtn" type="button">
+        <svg class="icon" width="18" height="18"><use href="#i-plus"></use></svg>
+        New campaign
+      </button>
+    </div>
+
+    <!-- Collapsible New Campaign Form Panel -->
+    <section id="formPanel" class="form-panel" hidden aria-labelledby="formTitle">
+      <div class="panel-heading">
+        <div>
+          <span class="section-label">Create on Sepolia</span>
+          <h2 id="formTitle">New campaign</h2>
+          <p>Set the funding terms. They cannot be changed after publishing to the smart contract.</p>
+        </div>
+        <button class="icon-button" id="closeFormBtn" type="button" aria-label="Close form">
+          <svg class="icon" width="18" height="18"><use href="#i-close"></use></svg>
+        </button>
+      </div>
+
+      <form id="createCampaignForm" class="campaign-form">
+        <label class="field wide">
+          <span>Campaign title</span>
+          <input id="campaignTitle" required maxlength="120" placeholder="e.g. Open robotics lab for students">
+        </label>
+        <label class="field wide">
+          <span>Description</span>
+          <textarea id="campaignDesc" rows="3" maxlength="600" placeholder="What are you building and who will it help?"></textarea>
+        </label>
+
+        <label class="field">
+          <span>Funding goal</span>
+          <div class="input-suffix">
+            <input id="campaignGoal" type="number" step="any" min="0.0001" required value="0.05" placeholder="0.05">
+            <b>ETH</b>
+          </div>
+        </label>
+
+        <label class="field">
+          <span>Duration</span>
+          <div class="input-suffix">
+            <input id="campaignDuration" type="number" min="1" required value="60" placeholder="60">
+            <b>MIN</b>
+          </div>
+          <div class="preset-row">
+            <button type="button" class="preset-btn" onclick="setDuration(2)">2m (Demo)</button>
+            <button type="button" class="preset-btn" onclick="setDuration(15)">15m</button>
+            <button type="button" class="preset-btn" onclick="setDuration(60)">1h</button>
+            <button type="button" class="preset-btn" onclick="setDuration(1440)">1 day</button>
+            <button type="button" class="preset-btn" onclick="setDuration(10080)">7 days</button>
+          </div>
+        </label>
+
+        <div class="form-note wide">
+          <svg class="icon" width="18" height="18"><use href="#i-info"></use></svg>
+          <span>All-or-nothing: if the goal is hit before deadline, creator withdraws. Otherwise contributors claim 100% refund.</span>
+        </div>
+
+        <div class="form-actions wide">
+          <button class="secondary-button" id="cancelFormBtn" type="button">Cancel</button>
+          <button class="primary-button" id="submitFormBtn" type="submit">
+            Review & Create <svg class="icon" width="16" height="16"><use href="#i-arrow"></use></svg>
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Testnet Disclaimer -->
+    <div class="disclaimer">
+      <svg class="icon" width="18" height="18"><use href="#i-info"></use></svg>
+      <span><strong>Sepolia testnet</strong> · Funds have no real-world value. Always verify the transaction details in your wallet.</span>
+    </div>
+
+    <!-- Campaign Tools, Search & Tabs -->
+    <section class="campaign-section">
+      <div class="campaign-tools">
+        <label class="search-field">
+          <svg class="icon" width="18" height="18"><use href="#i-search"></use></svg>
+          <input id="searchInput" placeholder="Search campaigns" aria-label="Search campaigns">
+          <button id="clearSearchBtn" type="button" aria-label="Clear search" hidden>
+            <svg class="icon" width="16" height="16"><use href="#i-close"></use></svg>
+          </button>
+        </label>
+        <button id="refreshBtn" class="refresh-button" type="button">
+          <svg class="icon" width="16" height="16"><use href="#i-check"></use></svg>
+          Refresh
+        </button>
+      </div>
+
+      <div class="tabs" role="tablist">
+        <button class="active" data-tab="all" role="tab" type="button">All <span id="countAll">0</span></button>
+        <button data-tab="active" role="tab" type="button">Active <span id="countActive">0</span></button>
+        <button data-tab="success" role="tab" type="button">Successful <span id="countSuccess">0</span></button>
+        <button data-tab="failed" role="tab" type="button">Failed <span id="countFailed">0</span></button>
+        <button data-tab="mine" role="tab" type="button">My campaigns <span id="countMine">0</span></button>
+      </div>
+
+      <div class="results-heading">
+        <span id="resultsCountText">0 campaigns</span>
+        <span id="networkStatusText">Live from Sepolia</span>
+      </div>
+
+      <!-- Campaign List & Skeletons -->
+      <div id="campaignList" class="campaign-list" aria-live="polite">
+        <div class="skeleton-card">
+          <div class="skeleton-line short"></div>
+          <div class="skeleton-line title"></div>
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line medium"></div>
+          <div class="skeleton-progress"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Transaction Modal Overlay -->
+<div id="txOverlay" class="transaction-overlay" hidden role="dialog" aria-modal="true">
+  <div class="transaction-modal">
+    <span class="loader"><svg class="icon" width="28" height="28"><use href="#i-wallet"></use></svg></span>
+    <span class="section-label">Transaction in progress</span>
+    <h2 id="txModalTitle">Confirm in your wallet</h2>
+    <p id="txModalDesc">Waiting for confirmation. Keep this window open.</p>
+    <div class="waiting-line"><span></span><span></span><span></span></div>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="toast" hidden role="status">
+  <span class="toast-icon"><svg id="toastIcon" class="icon" width="18" height="18"><use href="#i-check"></use></svg></span>
+  <div>
+    <strong id="toastTitle">Notification</strong>
+    <p id="toastMessage">Message content</p>
+  </div>
+  <button id="toastCloseBtn" type="button" aria-label="Dismiss notification">
+    <svg class="icon" width="16" height="16"><use href="#i-close"></use></svg>
+  </button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<script>
+  // Smart Contract Configuration
+  const CONTRACT_ADDRESS = "0x4237bDb0AEB119521859dEa7088AA09dE0500f1D";
+  const SEPOLIA_CHAIN_ID = 11155111n;
+  const SEPOLIA_HEX = "0xaa36a7";
+
+  const ABI = [
+    "function createCampaign(string title, string description, uint256 goal, uint256 durationInMinutes) returns (uint256)",
+    "function contribute(uint256 campaignId) payable",
+    "function withdrawFunds(uint256 campaignId)",
+    "function refund(uint256 campaignId)",
+    "function getAllCampaigns() view returns (tuple(uint256 id, address creator, string title, string description, uint256 goal, uint256 deadline, uint256 totalRaised, bool withdrawn)[])",
+    "function contributions(uint256, address) view returns (uint256)"
+  ];
+
+  // Mock demo campaigns (as reference in fundchain-source)
+  const DEMO_CAMPAIGNS = [
+    {
+      id: 0,
+      creator: "0x71C4B92945a0b731e8c75ef571cA601E858119A2",
+      title: "Open lab equipment for CS & Robotics students",
+      description: "Help us build a shared electronics bench with oscilloscopes, soldering tools, and starter components for student projects.",
+      goal: ethers.parseEther("5.0"),
+      totalRaised: ethers.parseEther("3.85"),
+      deadline: Math.floor(Date.now() / 1000) + 180000, // active
+      withdrawn: false,
+      mine: ethers.parseEther("0.5")
+    },
+    {
+      id: 1,
+      creator: "0x82B1B8989f64FfB975E6C1D6144eE404E904B8C1",
+      title: "Peer-to-peer study notes protocol",
+      description: "A community-owned verified lecture notes library built and maintained by students on-chain.",
+      goal: ethers.parseEther("2.0"),
+      totalRaised: ethers.parseEther("2.4"),
+      deadline: Math.floor(Date.now() / 1000) - 3600, // ended, success
+      withdrawn: false,
+      mine: 0n
+    },
+    {
+      id: 2,
+      creator: "0x4A22F96Cd27B13E995aDb4c3792E5B107C106d44",
+      title: "Accessible campus navigation map",
+      description: "Open mapping tools for step-free routes, accessible entrances, and quiet spaces across the university campus.",
+      goal: ethers.parseEther("4.0"),
+      totalRaised: ethers.parseEther("1.3"),
+      deadline: Math.floor(Date.now() / 1000) - 10800, // ended, failed
+      withdrawn: false,
+      mine: ethers.parseEther("0.4")
+    },
+    {
+      id: 3,
+      creator: "0x39D80E53B550e50338FBEb47648fF6A66113bEb8",
+      title: "Open-source ROS 2 robotics workshop",
+      description: "A hands-on weekend workshop covering safe hardware prototyping, computer vision, and ROS 2 middleware.",
+      goal: ethers.parseEther("3.0"),
+      totalRaised: ethers.parseEther("3.0"),
+      deadline: Math.floor(Date.now() / 1000) - 86400, // ended, success & withdrawn
+      withdrawn: true,
+      mine: ethers.parseEther("0.2")
+    }
+  ];
+
+  // State
+  let provider = null;
+  let signer = null;
+  let account = "";
+  let contract = null;
+  let isDemoMode = false;
+
+  let rawCampaigns = [];
+  let userContributions = {};
+  let currentTab = "all";
+  let searchQuery = "";
+  let expandedCardId = null;
+  let toastTimer = null;
+
+  // DOM Helpers
+  const $ = (id) => document.getElementById(id);
+
+  // Theme Management
+  function initTheme() {
+    const saved = localStorage.getItem("fc-theme") || "dark";
+    if (saved === "light") {
+      document.body.classList.add("theme-light");
+    } else {
+      document.body.classList.remove("theme-light");
+    }
+    updateThemeIcons();
+  }
+
+  function toggleTheme() {
+    const isLight = document.body.classList.toggle("theme-light");
+    localStorage.setItem("fc-theme", isLight ? "light" : "dark");
+    updateThemeIcons();
+  }
+
+  function updateThemeIcons() {
+    const isLight = document.body.classList.contains("theme-light");
+    const href = isLight ? "#i-moon" : "#i-sun";
+    document.querySelectorAll("#themeBtn use, #themeBtn2 use").forEach((el) => {
+      el.setAttribute("href", href);
+    });
+  }
+
+  // Toast System
+  function showToast(title, message, isError = false) {
+    clearTimeout(toastTimer);
+    const toast = $("toast");
+    const icon = $("toastIcon").querySelector("use");
+    $("toastTitle").textContent = title;
+    $("toastMessage").textContent = message;
+
+    if (isError) {
+      toast.className = "toast error";
+      icon.setAttribute("href", "#i-info");
+    } else {
+      toast.className = "toast success";
+      icon.setAttribute("href", "#i-check");
+    }
+    toast.hidden = false;
+    toastTimer = setTimeout(() => { toast.hidden = true; }, 5500);
+  }
+
+  $("toastCloseBtn").onclick = () => { $("toast").hidden = true; };
+
+  // Transaction Modal Overlay
+  function showTxModal(title, desc) {
+    $("txModalTitle").textContent = title;
+    $("txModalDesc").textContent = desc;
+    $("txOverlay").hidden = false;
+  }
+  function hideTxModal() {
+    $("txOverlay").hidden = true;
+  }
+
+  // Formatting Helpers
+  function shortAddr(a) {
+    if (!a) return "";
+    return a.slice(0, 6) + "…" + a.slice(-4);
+  }
+
+  function formatEth(wei) {
+    if (wei === undefined || wei === null) return "0";
+    const s = ethers.formatEther(wei);
+    return s.includes(".") ? s.replace(/(\.\d{1,4})\d*$/, "$1").replace(/\.?0+$/, "") || "0" : s;
+  }
+
+  function timeLeft(deadlineSecs) {
+    const now = Math.floor(Date.now() / 1000);
+    const secs = Number(deadlineSecs) - now;
+    if (secs <= 0) return "Ended";
+    const d = Math.floor(secs / 86400);
+    const h = Math.floor((secs % 86400) / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = secs % 60;
+    if (d > 0) return `${d}d ${h}h left`;
+    if (h > 0) return `${h}h ${m}m left`;
+    if (m > 0) return `${m}m ${s}s left`;
+    return `${s}s left`;
+  }
+
+  function friendlyError(e) {
+    const text = [e?.reason, e?.shortMessage, e?.info?.error?.message, e?.message].filter(Boolean).join(" ");
+    if (e?.code === "ACTION_REJECTED" || /user rejected|user denied/i.test(text))
+      return "You cancelled the transaction in your wallet.";
+    if (/campaign has ended/i.test(text)) return "This campaign has ended, so it no longer accepts contributions.";
+    if (/still running/i.test(text)) return "The campaign is still running. Try again after the deadline.";
+    if (/only the creator/i.test(text)) return "Only the campaign creator can withdraw the funds.";
+    if (/goal was not met/i.test(text)) return "The goal was not met, so funds cannot be withdrawn. Contributors can claim refunds.";
+    if (/goal was met/i.test(text)) return "The goal was met, so refunds are not available.";
+    if (/already withdrawn/i.test(text)) return "These funds have already been withdrawn.";
+    if (/nothing to refund/i.test(text)) return "You have nothing to refund on this campaign.";
+    if (/greater than 0/i.test(text)) return "Please enter an amount greater than 0.";
+    if (/does not exist/i.test(text)) return "That campaign does not exist.";
+    if (/title cannot be empty/i.test(text)) return "Please enter a title.";
+    if (/insufficient funds/i.test(text))
+      return "Not enough Sepolia ETH for this amount plus gas fee. Top up from a faucet.";
+    return (e?.shortMessage || e?.reason || "Transaction failed. Please try again.");
+  }
+
+  // Connect Web3 Wallet
+  async function connectWallet() {
+    if (!window.ethereum) {
+      $("noWalletAlert").hidden = false;
+      showToast("No Wallet Found", "Please install MetaMask or a Web3 browser extension.", true);
+      return;
+    }
+    $("noWalletAlert").hidden = true;
+
+    try {
+      showTxModal("Connecting to Wallet", "Please select your account in MetaMask…");
+      provider = new ethers.BrowserProvider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+
+      let net = await provider.getNetwork();
+      if (net.chainId !== SEPOLIA_CHAIN_ID) {
+        showTxModal("Switch Network", "Please switch your network to Sepolia in MetaMask…");
+        try {
+          await window.ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: SEPOLIA_HEX }]
+          });
+        } catch (switchErr) {
+          if (switchErr.code === 4902) {
+            await window.ethereum.request({
+              method: "wallet_addEthereumChain",
+              params: [{
+                chainId: SEPOLIA_HEX,
+                chainName: "Sepolia Test Network",
+                nativeCurrency: { name: "SepoliaETH", symbol: "ETH", decimals: 18 },
+                rpcUrls: ["https://rpc.sepolia.org"],
+                blockExplorerUrls: ["https://sepolia.etherscan.io"]
+              }]
+            });
+          } else {
+            throw switchErr;
+          }
+        }
+        provider = new ethers.BrowserProvider(window.ethereum);
+      }
+
+      signer = await provider.getSigner();
+      account = await signer.getAddress();
+      contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+      isDemoMode = false;
+
+      hideTxModal();
+      setupAppView();
+      await fetchUserData();
+      await loadCampaigns();
+      showToast("Wallet Connected", `Connected as ${shortAddr(account)}`);
+    } catch (err) {
+      hideTxModal();
+      showToast("Connection Error", friendlyError(err), true);
+    }
+  }
+
+  // Setup Demo Mode
+  function enterDemoMode() {
+    isDemoMode = true;
+    account = "0x71C4B92945a0b731e8c75ef571cA601E858119A2";
+    rawCampaigns = DEMO_CAMPAIGNS.map((c) => ({
+      ...c,
+      goal: BigInt(c.goal),
+      totalRaised: BigInt(c.totalRaised),
+      mine: BigInt(c.mine || 0)
+    }));
+    setupAppView();
+    renderCampaigns();
+    showToast("Demo Mode Active", "Browsing mock campaigns. Click 'Connect wallet' anytime to use Sepolia.");
+  }
+
+  function setupAppView() {
+    $("landing").hidden = true;
+    $("shell").hidden = false;
+    $("accountAddr").textContent = shortAddr(account);
+    $("fullAccountAddr").textContent = account;
+    $("etherscanLink").href = `https://sepolia.etherscan.io/address/${account}`;
+    $("networkStatusText").textContent = isDemoMode ? "Demo Mode (Mock data)" : "Live from Sepolia";
+  }
+
+  async function fetchUserData() {
+    if (isDemoMode || !provider || !account) {
+      $("accountBal").textContent = "3.85 ETH";
+      return;
+    }
+    try {
+      const balWei = await provider.getBalance(account);
+      $("accountBal").textContent = `${formatEth(balWei)} ETH`;
+    } catch {
+      $("accountBal").textContent = "";
+    }
+  }
+
+  // Load Campaigns from Contract
+  async function loadCampaigns() {
+    if (isDemoMode) {
+      renderCampaigns();
+      return;
+    }
+    try {
+      $("refreshBtn").classList.add("spinning");
+      const raw = await contract.getAllCampaigns();
+      rawCampaigns = raw.map((c) => ({
+        id: Number(c.id),
+        creator: c.creator,
+        title: c.title,
+        description: c.description,
+        goal: c.goal,
+        deadline: Number(c.deadline),
+        totalRaised: c.totalRaised,
+        withdrawn: c.withdrawn
+      }));
+
+      userContributions = {};
+      await Promise.all(rawCampaigns.map(async (c) => {
+        try {
+          userContributions[c.id] = await contract.contributions(c.id, account);
+        } catch {
+          userContributions[c.id] = 0n;
+        }
+      }));
+
+      renderCampaigns();
+    } catch (err) {
+      showToast("Data Load Error", friendlyError(err), true);
+    } finally {
+      $("refreshBtn").classList.remove("spinning");
+    }
+  }
+
+  // State determination
+  function getCampaignState(c) {
+    const now = Math.floor(Date.now() / 1000);
+    if (c.deadline > now) return "active";
+    return c.totalRaised >= c.goal ? "success" : "failed";
+  }
+
+  // Render Campaigns
+  function renderCampaigns() {
+    const list = $("campaignList");
+    list.replaceChildren();
+
+    const counts = { all: rawCampaigns.length, active: 0, success: 0, failed: 0, mine: 0 };
+    rawCampaigns.forEach((c) => {
+      const st = getCampaignState(c);
+      counts[st]++;
+      if (c.creator.toLowerCase() === account.toLowerCase()) counts.mine++;
+    });
+
+    $("countAll").textContent = counts.all;
+    $("countActive").textContent = counts.active;
+    $("countSuccess").textContent = counts.success;
+    $("countFailed").textContent = counts.failed;
+    $("countMine").textContent = counts.mine;
+
+    // Filter by tab and search
+    const filtered = [...rawCampaigns].reverse().filter((c) => {
+      const st = getCampaignState(c);
+      if (currentTab === "active" && st !== "active") return false;
+      if (currentTab === "success" && st !== "success") return false;
+      if (currentTab === "failed" && st !== "failed") return false;
+      if (currentTab === "mine" && c.creator.toLowerCase() !== account.toLowerCase()) return false;
+      if (searchQuery && !c.title.toLowerCase().includes(searchQuery) && !c.description.toLowerCase().includes(searchQuery))
+        return false;
+      return true;
+    });
+
+    $("resultsCountText").textContent = `${filtered.length} ${filtered.length === 1 ? 'campaign' : 'campaigns'}`;
+
+    if (filtered.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.innerHTML = `
+        <span class="empty-icon"><svg class="icon" width="24" height="24"><use href="#i-search"></use></svg></span>
+        <h3>No campaigns found</h3>
+        <p>${rawCampaigns.length === 0 ? "No campaigns have been created yet on this contract." : "Try adjusting your search query or switching tabs."}</p>
+        <button class="secondary-button" id="resetFiltersBtn" type="button">Reset filters</button>
+      `;
+      empty.querySelector("#resetFiltersBtn").onclick = () => {
+        searchQuery = "";
+        $("searchInput").value = "";
+        $("clearSearchBtn").hidden = true;
+        setTab("all");
+      };
+      list.append(empty);
+      return;
+    }
+
+    filtered.forEach((c) => {
+      const state = getCampaignState(c);
+      const isCreator = c.creator.toLowerCase() === account.toLowerCase();
+      const myContrib = isDemoMode ? (c.mine || 0n) : (userContributions[c.id] || 0n);
+      const pct = c.goal > 0n ? Number((c.totalRaised * 10000n) / c.goal) / 100 : 0;
+      const pctClamped = Math.min(100, pct);
+      const isExpanded = expandedCardId === c.id;
+
+      const card = document.createElement("article");
+      card.className = `campaign-card ${isExpanded ? "expanded" : ""}`;
+      card.dataset.id = c.id;
+      card.dataset.deadline = c.deadline;
+      card.dataset.state = state;
+
+      let badgeClass = "active";
+      let badgeLabel = "Active";
+      if (state === "success") { badgeClass = "success"; badgeLabel = "Goal reached"; }
+      if (state === "failed") { badgeClass = "danger"; badgeLabel = "Goal missed"; }
+
+      let progressTrackClass = "";
+      if (state === "success") progressTrackClass = "met";
+      if (state === "failed") progressTrackClass = "missed";
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-content">
+            <div class="card-title-row">
+              <div>
+                <span class="badge ${badgeClass}"><span></span>${badgeLabel}</span>
+                <h3 class="card-title"></h3>
+              </div>
+              <button class="expand-button" type="button" aria-label="Toggle details">
+                <svg class="icon" width="18" height="18"><use href="#i-chevron"></use></svg>
+              </button>
+            </div>
+
+            <p class="card-description"></p>
+
+            <div class="progress-copy">
+              <span><strong>${formatEth(c.totalRaised)}</strong> of ${formatEth(c.goal)} ETH raised</span>
+              <span>${pct.toFixed(pct < 10 ? 1 : 0)}%</span>
+            </div>
+            <div class="progress-track ${progressTrackClass}">
+              <span style="width: ${pctClamped}%"></span>
+            </div>
+
+            <div class="card-meta">
+              <div>
+                <span class="meta-label">Time left</span>
+                <strong class="time-left-val time-left">
+                  <svg class="icon" width="14" height="14"><use href="#i-clock"></use></svg>
+                  ${timeLeft(c.deadline)}
+                </strong>
+              </div>
+              <div>
+                <span class="meta-label">Creator</span>
+                <strong class="address" title="${c.creator}">
+                  <a href="https://sepolia.etherscan.io/address/${c.creator}" target="_blank" rel="noopener noreferrer">
+                    ${shortAddr(c.creator)}${isCreator ? " (you)" : ""}
+                  </a>
+                </strong>
+              </div>
+              <div>
+                <span class="meta-label">You gave</span>
+                <strong>${myContrib > 0n ? formatEth(myContrib) + " ETH" : "—"}</strong>
+              </div>
+              <div>
+                <span class="meta-label">ID</span>
+                <strong>#${c.id}</strong>
+              </div>
+            </div>
+          </div>
+
+          <aside class="card-action">
+            <!-- Action populated below -->
+          </aside>
+        </div>
+
+        ${isExpanded ? `
+          <div class="expanded-content">
+            <div>
+              <h4>Campaign Details</h4>
+              <div class="detail-box">
+                <div class="detail-row">
+                  <span>Contract Address</span>
+                  <strong>${shortAddr(CONTRACT_ADDRESS)}</strong>
+                </div>
+                <div class="detail-row">
+                  <span>Campaign ID</span>
+                  <strong>#${c.id}</strong>
+                </div>
+                <div class="detail-row">
+                  <span>Goal in ETH</span>
+                  <strong>${formatEth(c.goal)} ETH</strong>
+                </div>
+                <div class="detail-row">
+                  <span>Deadline</span>
+                  <strong>${new Date(c.deadline * 1000).toLocaleString()}</strong>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h4>On-chain Verification</h4>
+              <div class="detail-box">
+                <div class="detail-row">
+                  <span>Contract on Sepolia</span>
+                  <a href="https://sepolia.etherscan.io/address/${CONTRACT_ADDRESS}" target="_blank" rel="noopener noreferrer">
+                    View on Etherscan <svg class="icon" width="14" height="14" style="display:inline"><use href="#i-external"></use></svg>
+                  </a>
+                </div>
+                <div class="detail-row">
+                  <span>Creator Address</span>
+                  <a href="https://sepolia.etherscan.io/address/${c.creator}" target="_blank" rel="noopener noreferrer">
+                    ${shortAddr(c.creator)} <svg class="icon" width="14" height="14" style="display:inline"><use href="#i-external"></use></svg>
+                  </a>
+                </div>
+                <div class="detail-row">
+                  <span>Funding Status</span>
+                  <strong style="color: ${state === 'success' ? 'var(--success)' : state === 'failed' ? 'var(--danger)' : 'var(--accent)'}">
+                    ${state === 'active' ? 'Active & Open' : state === 'success' ? 'Target Reached' : 'Target Missed'}
+                  </strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        ` : ""}
+      `;
+
+      card.querySelector(".card-title").textContent = c.title;
+      card.querySelector(".card-description").textContent = c.description || "No description provided.";
+
+      // Expand toggle
+      card.querySelector(".expand-button").onclick = () => {
+        expandedCardId = expandedCardId === c.id ? null : c.id;
+        renderCampaigns();
+      };
+
+      // Populate Action Side
+      const actionEl = card.querySelector(".card-action");
+      if (state === "active") {
+        actionEl.innerHTML = `
+          <div>
+            <span class="action-kicker">Back this campaign</span>
+            <h4>Contribute test ETH</h4>
+          </div>
+          <form class="contrib-form">
+            <div class="field">
+              <span>Amount</span>
+              <div class="input-suffix">
+                <input class="contrib-input" type="number" min="0.0001" step="any" placeholder="0.01" required value="0.01">
+                <b>ETH</b>
+              </div>
+              <div class="quick-amounts">
+                <button type="button" onclick="setContribAmt(this, 0.01)">+0.01</button>
+                <button type="button" onclick="setContribAmt(this, 0.05)">+0.05</button>
+                <button type="button" onclick="setContribAmt(this, 0.1)">+0.10</button>
+              </div>
+            </div>
+            <button class="primary-button full" type="submit" style="margin-top:10px">
+              Contribute <svg class="icon" width="16" height="16"><use href="#i-arrow"></use></svg>
+            </button>
+          </form>
+          <small>Instant on-chain contribution</small>
+        `;
+
+        actionEl.querySelector(".contrib-form").onsubmit = (e) => {
+          e.preventDefault();
+          const amt = actionEl.querySelector(".contrib-input").value;
+          handleContribute(c.id, amt);
+        };
+      } else if (state === "success") {
+        if (isCreator && !c.withdrawn) {
+          actionEl.innerHTML = `
+            <div>
+              <span class="action-kicker">Creator action</span>
+              <h4>Withdraw the pot</h4>
+            </div>
+            <p>The funding goal was hit! Claim the total raised ETH into your wallet.</p>
+            <button class="primary-button full" id="withdrawBtn" type="button" style="background:var(--success)">
+              Withdraw ${formatEth(c.totalRaised)} ETH
+            </button>
+            <small>Funds are transferred to creator</small>
+          `;
+          actionEl.querySelector("#withdrawBtn").onclick = () => handleWithdraw(c.id);
+        } else if (c.withdrawn) {
+          actionEl.innerHTML = `
+            <div class="locked-action">
+              <svg class="icon" width="36" height="36" style="color:var(--success)"><use href="#i-check"></use></svg>
+              <div>
+                <span class="action-kicker">Completed</span>
+                <h4>Funds withdrawn</h4>
+              </div>
+              <p>The creator has successfully claimed the full raised amount.</p>
+              <div class="disabled-pill">✓ Transferred to creator</div>
+            </div>
+          `;
+        } else {
+          actionEl.innerHTML = `
+            <div class="locked-action">
+              <svg class="icon" width="36" height="36" style="color:var(--success)"><use href="#i-check"></use></svg>
+              <div>
+                <span class="action-kicker">Goal reached</span>
+                <h4>Funding complete</h4>
+              </div>
+              <p>Goal was achieved! The creator can withdraw the funds anytime.</p>
+              <div class="disabled-pill">Awaiting creator withdrawal</div>
+            </div>
+          `;
+        }
+      } else if (state === "failed") {
+        if (myContrib > 0n) {
+          actionEl.innerHTML = `
+            <div>
+              <span class="action-kicker">Campaign ended</span>
+              <h4>Your funds are refundable</h4>
+            </div>
+            <p>The goal wasn't met. Claim your full contribution back from the contract.</p>
+            <div class="refund-amount">
+              <span>Your contribution</span>
+              <strong>${formatEth(myContrib)} ETH</strong>
+            </div>
+            <button class="danger-button full" id="refundBtn" type="button">
+              Claim full refund
+            </button>
+            <small>Pulls ETH back to your wallet</small>
+          `;
+          actionEl.querySelector("#refundBtn").onclick = () => handleRefund(c.id);
+        } else {
+          actionEl.innerHTML = `
+            <div class="locked-action">
+              <svg class="icon" width="36" height="36" style="color:var(--danger)"><use href="#i-close"></use></svg>
+              <div>
+                <span class="action-kicker">Campaign ended</span>
+                <h4>Goal missed</h4>
+              </div>
+              <p>This campaign did not meet its goal by the deadline. You did not contribute.</p>
+              <div class="disabled-pill">Nothing to refund</div>
+            </div>
+          `;
+        }
+      }
+
+      list.append(card);
+    });
+  }
+
+  // Quick Amount Helper
+  window.setContribAmt = function(btn, val) {
+    const input = btn.closest(".field").querySelector(".contrib-input");
+    if (input) input.value = val;
+  };
+
+  window.setDuration = function(mins) {
+    $("campaignDuration").value = mins;
+  };
+
+  // Web3 Actions
+  async function handleContribute(id, amountEth) {
+    let wei;
+    try {
+      wei = ethers.parseEther(String(amountEth).trim());
+    } catch {
+      showToast("Invalid Amount", "Please enter a valid ETH number (e.g. 0.05).", true);
+      return;
+    }
+    if (wei <= 0n) {
+      showToast("Invalid Amount", "Contribution must be greater than 0 ETH.", true);
+      return;
+    }
+
+    if (isDemoMode) {
+      showTxModal("Contributing (Demo)", `Simulating contribution of ${amountEth} ETH…`);
+      setTimeout(() => {
+        const item = rawCampaigns.find((x) => x.id === id);
+        if (item) {
+          item.totalRaised += wei;
+          item.mine = (item.mine || 0n) + wei;
+        }
+        hideTxModal();
+        showToast("Contribution Confirmed", `Contributed ${amountEth} ETH in demo mode!`);
+        renderCampaigns();
+      }, 1200);
+      return;
+    }
+
+    try {
+      showTxModal("Confirm Contribution", "Please confirm the transaction in MetaMask…");
+      const tx = await contract.contribute(id, { value: wei });
+      showTxModal("Mining Transaction", "Waiting for block confirmation on Sepolia…");
+      await tx.wait();
+      hideTxModal();
+      showToast("Contribution Confirmed", `Successfully contributed ${amountEth} ETH. Thank you!`);
+      await fetchUserData();
+      await loadCampaigns();
+    } catch (err) {
+      hideTxModal();
+      showToast("Contribution Failed", friendlyError(err), true);
+    }
+  }
+
+  async function handleWithdraw(id) {
+    if (isDemoMode) {
+      showTxModal("Withdrawing (Demo)", "Simulating funds withdrawal…");
+      setTimeout(() => {
+        const item = rawCampaigns.find((x) => x.id === id);
+        if (item) item.withdrawn = true;
+        hideTxModal();
+        showToast("Funds Withdrawn", "Demo funds successfully withdrawn to creator wallet.");
+        renderCampaigns();
+      }, 1200);
+      return;
+    }
+
+    try {
+      showTxModal("Confirm Withdrawal", "Please confirm the withdrawal in your wallet…");
+      const tx = await contract.withdrawFunds(id);
+      showTxModal("Mining Transaction", "Processing withdrawal on Sepolia…");
+      await tx.wait();
+      hideTxModal();
+      showToast("Withdrawal Confirmed", "Funds transferred to your wallet.");
+      await fetchUserData();
+      await loadCampaigns();
+    } catch (err) {
+      hideTxModal();
+      showToast("Withdrawal Failed", friendlyError(err), true);
+    }
+  }
+
+  async function handleRefund(id) {
+    if (isDemoMode) {
+      showTxModal("Processing Refund (Demo)", "Simulating refund return…");
+      setTimeout(() => {
+        const item = rawCampaigns.find((x) => x.id === id);
+        if (item) item.mine = 0n;
+        hideTxModal();
+        showToast("Refund Confirmed", "Demo contribution refunded to your balance.");
+        renderCampaigns();
+      }, 1200);
+      return;
+    }
+
+    try {
+      showTxModal("Confirm Refund", "Please confirm refund transaction in MetaMask…");
+      const tx = await contract.refund(id);
+      showTxModal("Mining Transaction", "Processing refund on Sepolia…");
+      await tx.wait();
+      hideTxModal();
+      showToast("Refund Confirmed", "Your ETH contribution was refunded to your wallet.");
+      await fetchUserData();
+      await loadCampaigns();
+    } catch (err) {
+      hideTxModal();
+      showToast("Refund Failed", friendlyError(err), true);
+    }
+  }
+
+  async function handleCreateCampaign(e) {
+    e.preventDefault();
+    const title = $("campaignTitle").value.trim();
+    const desc = $("campaignDesc").value.trim();
+    const goalVal = $("campaignGoal").value;
+    const durVal = $("campaignDuration").value;
+
+    if (!title) {
+      showToast("Title Required", "Please enter a title for your campaign.", true);
+      return;
+    }
+
+    let goalWei;
+    try {
+      goalWei = ethers.parseEther(String(goalVal).trim());
+    } catch {
+      showToast("Invalid Goal", "Please enter a valid ETH goal (e.g. 0.05).", true);
+      return;
+    }
+    const durationMins = BigInt(durVal || "60");
+
+    if (isDemoMode) {
+      showTxModal("Creating Campaign (Demo)", "Publishing campaign to demo state…");
+      setTimeout(() => {
+        const newId = rawCampaigns.length;
+        rawCampaigns.unshift({
+          id: newId,
+          creator: account,
+          title,
+          description: desc,
+          goal: goalWei,
+          deadline: Math.floor(Date.now() / 1000) + Number(durationMins) * 60,
+          totalRaised: 0n,
+          withdrawn: false,
+          mine: 0n
+        });
+        hideTxModal();
+        $("createCampaignForm").reset();
+        $("campaignGoal").value = "0.05";
+        $("campaignDuration").value = "60";
+        $("formPanel").hidden = true;
+        showToast("Campaign Created", `Demo campaign #${newId} published!`);
+        renderCampaigns();
+      }, 1200);
+      return;
+    }
+
+    const submitBtn = $("submitFormBtn");
+    submitBtn.disabled = true;
+
+    try {
+      showTxModal("Confirm Campaign Creation", "Please confirm creation in MetaMask…");
+      const tx = await contract.createCampaign(title, desc, goalWei, durationMins);
+      showTxModal("Deploying Campaign", "Publishing new campaign to Sepolia contract…");
+      await tx.wait();
+      hideTxModal();
+      showToast("Campaign Created", "Your campaign is now live on Sepolia!");
+      $("createCampaignForm").reset();
+      $("campaignGoal").value = "0.05";
+      $("campaignDuration").value = "60";
+      $("formPanel").hidden = true;
+      await loadCampaigns();
+    } catch (err) {
+      hideTxModal();
+      showToast("Creation Failed", friendlyError(err), true);
+    } finally {
+      submitBtn.disabled = false;
+    }
+  }
+
+  // Filter Tabs
+  function setTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll(".tabs button").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.tab === tab);
+    });
+    renderCampaigns();
+  }
+
+  // Event Listeners
+  $("themeBtn").onclick = toggleTheme;
+  $("themeBtn2").onclick = toggleTheme;
+  $("connectBtn").onclick = connectWallet;
+  $("previewBtn").onclick = enterDemoMode;
+
+  $("toggleFormBtn").onclick = () => {
+    $("formPanel").hidden = !$("formPanel").hidden;
+    if (!$("formPanel").hidden) $("campaignTitle").focus();
+  };
+  $("closeFormBtn").onclick = () => { $("formPanel").hidden = true; };
+  $("cancelFormBtn").onclick = () => { $("formPanel").hidden = true; };
+  $("createCampaignForm").onsubmit = handleCreateCampaign;
+
+  $("refreshBtn").onclick = () => {
+    if (contract) loadCampaigns();
+    else if (isDemoMode) renderCampaigns();
+  };
+
+  // Search
+  $("searchInput").oninput = (e) => {
+    searchQuery = e.target.value.trim().toLowerCase();
+    $("clearSearchBtn").hidden = !searchQuery;
+    renderCampaigns();
+  };
+  $("clearSearchBtn").onclick = () => {
+    $("searchInput").value = "";
+    searchQuery = "";
+    $("clearSearchBtn").hidden = true;
+    renderCampaigns();
+  };
+
+  // Tabs
+  document.querySelectorAll(".tabs button").forEach((btn) => {
+    btn.onclick = () => setTab(btn.dataset.tab);
+  });
+
+  // Wallet Menu Dropdown
+  $("walletPill").onclick = (e) => {
+    e.stopPropagation();
+    $("walletMenu").classList.toggle("open");
+  };
+  document.addEventListener("click", () => {
+    $("walletMenu").classList.remove("open");
+  });
+  $("walletMenu").onclick = (e) => e.stopPropagation();
+
+  $("copyAddrBtn").onclick = () => {
+    navigator.clipboard.writeText(account);
+    showToast("Address Copied", "Wallet address copied to clipboard!");
+    $("walletMenu").classList.remove("open");
+  };
+
+  $("disconnectBtn").onclick = () => {
+    provider = null;
+    signer = null;
+    account = "";
+    contract = null;
+    isDemoMode = false;
+    $("walletMenu").classList.remove("open");
+    $("shell").hidden = true;
+    $("landing").hidden = false;
+    showToast("Disconnected", "Wallet disconnected.");
+  };
+
+  // MetaMask Events
+  if (window.ethereum) {
+    window.ethereum.on("accountsChanged", () => {
+      if (account) location.reload();
+    });
+    window.ethereum.on("chainChanged", () => {
+      if (account) location.reload();
+    });
+  }
+
+  // Real-time Countdown Timer (every second)
+  setInterval(() => {
+    let stateChanged = false;
+    const now = Math.floor(Date.now() / 1000);
+    document.querySelectorAll(".campaign-card").forEach((card) => {
+      const deadline = Number(card.dataset.deadline);
+      const timeValEl = card.querySelector(".time-left-val");
+      if (timeValEl) {
+        timeValEl.innerHTML = `<svg class="icon" width="14" height="14"><use href="#i-clock"></use></svg> ${timeLeft(deadline)}`;
+      }
+      if (card.dataset.state === "active" && deadline <= now) {
+        stateChanged = true;
+      }
+    });
+    if (stateChanged) {
+      if (contract) loadCampaigns();
+      else if (isDemoMode) renderCampaigns();
+    }
+  }, 1000);
+
+  // Initialize
+  initTheme();
+</script>
+</body>
+</html>
