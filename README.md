@@ -12,40 +12,6 @@ If a campaign reaches its funding goal before the deadline expires, the creator 
 
 ---
 
-## 📌 Table of Contents
-
-- [Live Deployment](#-live-deployment)
-- [How It Works](#-how-it-works)
-- [Key Features](#-key-features)
-- [Smart Contract Specification](#-smart-contract-specification)
-  - [Campaign Lifecycle & States](#campaign-lifecycle--states)
-  - [Methods & Interface](#methods--interface)
-  - [Security & Design Patterns](#security--design-patterns)
-- [Project Structure](#-project-structure)
-- [Prerequisites](#-prerequisites)
-- [Installation & Setup](#-installation--setup)
-- [Compile, Test & Deploy](#-compile-test--deploy)
-  - [Compile Contracts](#1-compile-contracts)
-  - [Run Automated Tests](#2-run-automated-tests)
-  - [Deploy to Sepolia](#3-deploy-to-sepolia)
-- [Running the Frontend](#-running-the-frontend)
-- [Quick Demo Walkthrough](#-quick-demo-walkthrough)
-- [Security & Best Practices](#-security--best-practices)
-- [License](#-license)
-
----
-
-## 🌐 Live Deployment
-
-| Parameter | Value |
-|---|---|
-| **Network** | Ethereum Sepolia Testnet |
-| **Chain ID** | `11155111` (`0xaa36a7`) |
-| **Contract Address** | [`0x4237bDb0AEB119521859dEa7088AA09dE0500f1D`](https://sepolia.etherscan.io/address/0x4237bDb0AEB119521859dEa7088AA09dE0500f1D) |
-| **Block Explorer** | [Sepolia Etherscan Contract View](https://sepolia.etherscan.io/address/0x4237bDb0AEB119521859dEa7088AA09dE0500f1D) |
-
----
-
 ## 💡 How It Works
 
 ```
@@ -83,20 +49,6 @@ If a campaign reaches its funding goal before the deadline expires, the creator 
 
 ---
 
-## ✨ Key Features
-
-### 🖥️ Modern Web3 Frontend
-- **Zero-framework footprint**: Built with lightweight, pure semantic HTML5, CSS3 variables, and vanilla JavaScript powered by **Ethers.js v6**.
-- **Dark & Light Modes**: Seamless visual themes with persistent preference storage in `localStorage`.
-- **MetaMask Wallet Integration**: One-click wallet connect, automatic Sepolia network detection, balance updates, and account switching.
-- **Interactive Demo Mode**: Explore the full crowdfunding dashboard and test flows even without a Web3 extension or test ETH.
-- **Filter Tabs & Search**: Filter campaigns by `All`, `Active`, `Successful`, `Failed`, or `My campaigns`, plus real-time keyword search across titles and descriptions.
-- **Duration Presets & Quick Chips**: Preset buttons for 2 min (quick testing), 15 min, 1 hr, 1 day, and 7 days, along with quick contribution increment buttons (`+0.01`, `+0.05`, `+0.10 ETH`).
-- **Live State & Counters**: Real-time progress bars, time-remaining countdowns, and dynamic action buttons based on the connected wallet's relationship to each campaign (creator vs contributor).
-- **Transaction Feedback**: Informative modal overlays indicating MetaMask signing states and blockchain mining confirmations, accompanied by auto-dismissing toast notifications.
-
----
-
 ## 📜 Smart Contract Specification
 
 The smart contract is written in Solidity `^0.8.20` and implemented in [`contracts/FundChain.sol`](contracts/FundChain.sol).
@@ -109,42 +61,12 @@ The smart contract is written in Solidity `^0.8.20` and implemented in [`contrac
 | **Successful** | `block.timestamp >= deadline && totalRaised >= goal` | Creator can call `withdrawFunds()`; contributions are locked |
 | **Failed** | `block.timestamp >= deadline && totalRaised < goal` | Contributors can call `refund()` to retrieve their ETH |
 
-### Methods & Interface
-
-#### Write Methods
-- `createCampaign(string title, string description, uint256 goal, uint256 durationInMinutes) external returns (uint256)`
-  - Opens a new campaign with a calculated deadline of `block.timestamp + durationInMinutes * 1 minutes`.
-  - Emits `CampaignCreated(uint256 indexed id, address indexed creator, uint256 goal, uint256 deadline)`.
-- `contribute(uint256 campaignId) external payable`
-  - Accepts test ETH for an active campaign before its deadline.
-  - Updates campaign total and maps individual contributor contributions.
-  - Emits `Contributed(uint256 indexed id, address indexed contributor, uint256 amount)`.
-- `withdrawFunds(uint256 campaignId) external`
-  - Allows only the campaign creator to withdraw the entire pot after a successful campaign has ended.
-  - Emits `Withdrawn(uint256 indexed id, address indexed creator, uint256 amount)`.
-- `refund(uint256 campaignId) external`
-  - Allows contributors to claim back their contributed ETH after a campaign ends without reaching its goal.
-  - Emits `Refunded(uint256 indexed id, address indexed contributor, uint256 amount)`.
-
-#### View Methods
-- `getAllCampaigns() external view returns (Campaign[] memory)`
-  - Returns an array containing all created campaigns for easy client-side listing and rendering.
-- `getCampaignCount() external view returns (uint256)`
-  - Returns the total number of campaigns created.
-- `contributions(uint256 campaignId, address contributor) external view returns (uint256)`
-  - Public mapping returning the exact amount in wei contributed by an address to a campaign.
-
-### Security & Design Patterns
-- **Checks-Effects-Interactions (CEI)**: State variables (`c.withdrawn = true`, `contributions[campaignId][msg.sender] = 0`) are modified **before** initiating external ETH transfers to prevent reentrancy attacks.
-- **Pull over Push Payments**: Contributors pull their own refunds and creators pull their own funds rather than looping through recipient arrays (mitigates denial-of-service / gas limit attacks).
-- **Strict Validations**: Reverts with clear error messages for invalid inputs, zero-amount contributions, non-existent campaigns, and unauthorized calls.
-
 ---
 
 ## 📁 Project Structure
 
 ```text
-dvote/
+fundchain-mvp1/
 ├── contracts/
 │   └── FundChain.sol          # Solidity smart contract
 ├── scripts/
@@ -293,8 +215,3 @@ To test both outcomes in a few minutes:
 - **Explicit Access Controls**: Strict `require` checks ensure that only the campaign creator can withdraw funds and only valid contributors can request refunds.
 - **Fail-Safe Refunds**: In case a project does not meet its target, contributors retain cryptographic ownership and pull rights over their deposited assets.
 
----
-
-## 📄 License
-
-This project is licensed under the [MIT License](LICENSE).
