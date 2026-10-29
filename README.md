@@ -1,11 +1,5 @@
 # FundChain — Decentralized Crowdfunding on Sepolia
 
-[![Solidity](https://img.shields.io/badge/Solidity-0.8.20-363636?logo=solidity)](https://soliditylang.org/)
-[![Hardhat](https://img.shields.io/badge/Hardhat-2.22.17-yellow?logo=ethereum)](https://hardhat.org/)
-[![Ethers.js](https://img.shields.io/badge/Ethers.js-v6-2535a0)](https://docs.ethers.org/v6/)
-[![Network](https://img.shields.io/badge/Network-Sepolia%20Testnet-blue)](https://sepolia.etherscan.io/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-
 **FundChain** is an all-or-nothing crowdfunding decentralized application (dApp) deployed on the **Ethereum Sepolia testnet**. It allows project creators to raise test ETH with transparent, immutable rules enforced by a smart contract.
 
 If a campaign reaches its funding goal before the deadline expires, the creator can withdraw the entire pot. If the goal is missed, all contributors can claim a 100% refund of their contributions directly from the smart contract.
